@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 # Created by https://www.toptal.com/developers/gitignore/api/c,c++,macos,swift
 # Edit at https://www.toptal.com/developers/gitignore?templates=c,c++,macos,swift
-=======
-# Created by https://www.toptal.com/developers/gitignore/api/c,c++
-# Edit at https://www.toptal.com/developers/gitignore?templates=c,c++
->>>>>>> 76ecd7242373a12d54d0537036e49f16611ffecb
 
 ### C ###
 # Prerequisites
@@ -79,7 +74,6 @@ dkms.conf
 
 # Executables
 
-<<<<<<< HEAD
 ### macOS ###
 # General
 .DS_Store
@@ -198,7 +192,3 @@ fastlane/test_output
 iOSInjectionProject/
 
 # End of https://www.toptal.com/developers/gitignore/api/c,c++,macos,swift
-=======
-# End of https://www.toptal.com/developers/gitignore/api/c,c++
->>>>>>> 76ecd7242373a12d54d0537036e49f16611ffecb
-
