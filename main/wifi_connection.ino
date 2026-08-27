@@ -6,7 +6,9 @@ String hash = gerarUUIDv4();
 
 #include "mbedtls/base64.h"
 
-static uint8_t imgBuf[4736];
+uint8_t combinedBuf[4736 * 2]; 
+uint8_t imgBufBlack[4736];
+uint8_t imgBufRed[4736];
 
 void handle_paringcode() {
   printOnDisplay("Pareando", ".........");
@@ -81,13 +83,17 @@ void handle_show_image() {
 
   String b64 = server.arg("plain");
   size_t outLen = 0;
-  int rc = mbedtls_base64_decode(imgBuf, sizeof(imgBuf), &outLen, (const unsigned char*)b64.c_str(), b64.length());
+  int rc = mbedtls_base64_decode(combinedBuf, sizeof(combinedBuf), &outLen,
+                                  (const unsigned char*)b64.c_str(), b64.length());
 
-  if (rc != 0 || outLen != sizeof(imgBuf)) {
+  if (rc != 0 || outLen != sizeof(combinedBuf)) {
     Serial.printf("base64 rc=%d outLen=%u b64Len=%u\n", rc, (unsigned)outLen, b64.length());
     server.send(400, "application/json", json_response(false, "Payload invalido"));
-    return;   // NÃO comente esse return
+    return;
   }
+
+  memcpy(imgBufBlack, combinedBuf, 4736);
+  memcpy(imgBufRed, combinedBuf + 4736, 4736);
 
   server.send(200, "application/json", json_response(true, "Imagem desenhada"));
 
@@ -96,7 +102,8 @@ void handle_show_image() {
   display.firstPage();
   do {
     display.fillScreen(GxEPD_WHITE);
-    display.drawBitmap(0, 0, imgBuf, 296, 128, GxEPD_BLACK);
+    display.drawBitmap(0, 0, imgBufBlack, 296, 128, GxEPD_BLACK);
+    display.drawBitmap(0, 0, imgBufRed, 296, 128, GxEPD_RED);
   } while (display.nextPage());
 }
 
