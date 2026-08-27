@@ -45,7 +45,7 @@ void handle_print_text() {
     String responseString = json_response(true, "Data processed successfully");
     server.send(200, "application/json", responseString);
   } else {
-    String erroString = json_response(false, "Campos ssid/password ausentes");
+    String erroString = json_response(false, "Campos messageOne/messageTwo ausentes");
     server.send(400, "application/json", erroString);
   }
 }
@@ -59,6 +59,40 @@ String json_response(bool success, const char* message) {
   serializeJson(responseDoc, responseString);
 
   return responseString;
+}
+
+void handle_show_image() {
+  if (server.hasArg("plain") == false) {
+    server.send(400, "application/json", "{\"error\":\"Body expected\"}");
+    Serial.println("Erro 400");
+    return;
+  }
+
+  String jsonBody = server.arg("plain");
+  Serial.println("\nReceived raw JSON:");
+  Serial.println(jsonBody);
+
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, jsonBody);
+
+  if (error) {
+    Serial.print("deserializeJson() failed: ");
+    Serial.println(error.c_str());
+    
+    server.send(400, "application/json", "{\"error\":\"Invalid JSON structure\"}");
+    Serial.println("Erro em parsing");
+    return;
+  }
+
+  if (doc.containsKey("hash") && doc["hash"] == hash.c_str() && doc.containsKey("imageData")) {
+    Serial.println(doc["imageData"].as<const char*>());
+    String responseString = json_response(true, "Data processed successfully");
+    server.send(200, "application/json", responseString);
+  } else {
+    String erroString = json_response(false, "Campos imageData ausentes");
+    server.send(400, "application/json", erroString);
+  }
+
 }
 
 void start_access_point() {

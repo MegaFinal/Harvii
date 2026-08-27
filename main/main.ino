@@ -50,6 +50,7 @@ void setup() {
   server.on("/save_wifi", handle_savewifi);
   server.on("/ask_code", handle_paringcode);
   server.on("/send_text", handle_print_text);
+  server.on("/send_image", handle_show_image);
   server.begin();
 }
  

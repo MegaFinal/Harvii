@@ -12,6 +12,10 @@ void printOnDisplay(const char* text, const char* other_text) {
   display.display();
 }
 
+void clean_display() {
+  display.fillScreen(GxEPD_WHITE);
+}
+
 // Printa texto preto no display
 void update_display(const String& text, int x, int y) {
   display.setFullWindow();
