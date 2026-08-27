@@ -43,6 +43,10 @@ void setup() {
   display.init(115200);
   display.setRotation(1);
 
+  // Avisa o servidor para não ignorar o nosso cabeçalho de segurança
+  const char* headerKeys[] = {"X-Auth-Hash"};
+  server.collectHeaders(headerKeys, 1);
+
   // Verifica se tem wifi -> não: inicia hostspot
   check_has_wifi();
  

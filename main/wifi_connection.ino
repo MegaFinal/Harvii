@@ -4,6 +4,10 @@
 // SignIn Code
 String hash = gerarUUIDv4();
 
+#include "mbedtls/base64.h"
+
+static uint8_t imgBuf[4736];
+
 void handle_paringcode() {
   printOnDisplay("Pareando", ".........");
 
@@ -52,7 +56,7 @@ void handle_print_text() {
 
 String json_response(bool success, const char* message) {
   JsonDocument responseDoc;
-  responseDoc["success"] = true;
+  responseDoc["success"] = success;
   responseDoc["message"] = message;
 
   String responseString;
@@ -62,37 +66,39 @@ String json_response(bool success, const char* message) {
 }
 
 void handle_show_image() {
-  if (server.hasArg("plain") == false) {
-    server.send(400, "application/json", "{\"error\":\"Body expected\"}");
-    Serial.println("Erro 400");
+  String hashRecebido = server.header("X-Auth-Hash");
+  hashRecebido.trim();
+  hash.trim();
+
+  if (!server.hasHeader("X-Auth-Hash") || hashRecebido != hash) {
+    server.send(401, "application/json", json_response(false, "Nao autorizado"));
+    return;
+  }
+  if (!server.hasArg("plain")) {
+    server.send(400, "application/json", json_response(false, "Corpo vazio"));
     return;
   }
 
-  String jsonBody = server.arg("plain");
-  Serial.println("\nReceived raw JSON:");
-  Serial.println(jsonBody);
+  String b64 = server.arg("plain");
+  size_t outLen = 0;
+  int rc = mbedtls_base64_decode(imgBuf, sizeof(imgBuf), &outLen,
+                                 (const unsigned char*)b64.c_str(), b64.length());
 
-  JsonDocument doc;
-  DeserializationError error = deserializeJson(doc, jsonBody);
-
-  if (error) {
-    Serial.print("deserializeJson() failed: ");
-    Serial.println(error.c_str());
-    
-    server.send(400, "application/json", "{\"error\":\"Invalid JSON structure\"}");
-    Serial.println("Erro em parsing");
-    return;
+  if (rc != 0 || outLen != sizeof(imgBuf)) {
+    Serial.printf("base64 rc=%d outLen=%u b64Len=%u\n", rc, (unsigned)outLen, b64.length());
+    server.send(400, "application/json", json_response(false, "Payload invalido"));
+    return;   // NÃO comente esse return
   }
 
-  if (doc.containsKey("hash") && doc["hash"] == hash.c_str() && doc.containsKey("imageData")) {
-    Serial.println(doc["imageData"].as<const char*>());
-    String responseString = json_response(true, "Data processed successfully");
-    server.send(200, "application/json", responseString);
-  } else {
-    String erroString = json_response(false, "Campos imageData ausentes");
-    server.send(400, "application/json", erroString);
-  }
+  server.send(200, "application/json", json_response(true, "Imagem desenhada"));
 
+  display.setRotation(1);
+  display.setFullWindow();
+  display.firstPage();
+  do {
+    display.fillScreen(GxEPD_WHITE);
+    display.drawBitmap(0, 0, imgBuf, 296, 128, GxEPD_BLACK);
+  } while (display.nextPage());
 }
 
 void start_access_point() {
