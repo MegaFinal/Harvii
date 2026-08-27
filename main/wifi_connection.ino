@@ -81,8 +81,7 @@ void handle_show_image() {
 
   String b64 = server.arg("plain");
   size_t outLen = 0;
-  int rc = mbedtls_base64_decode(imgBuf, sizeof(imgBuf), &outLen,
-                                 (const unsigned char*)b64.c_str(), b64.length());
+  int rc = mbedtls_base64_decode(imgBuf, sizeof(imgBuf), &outLen, (const unsigned char*)b64.c_str(), b64.length());
 
   if (rc != 0 || outLen != sizeof(imgBuf)) {
     Serial.printf("base64 rc=%d outLen=%u b64Len=%u\n", rc, (unsigned)outLen, b64.length());
