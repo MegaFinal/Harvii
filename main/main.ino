@@ -30,10 +30,37 @@ const char* password = "12345678";
 String novoWifi = "";
 String novaPassword = "";
  
+ // wifi testar
+const char* devWifiSSID = "";
+const char* devWifiPassword = "";
 // Create web server on port 80
 WebServer server(80);
 
+//conectar direto
+void connectToWifiDirectly() {
+  Serial.println("Conectando ao WiFi (modo dev)...");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(devWifiSSID, devWifiPassword);
+
+  int tentativas = 0;
+  while (WiFi.status() != WL_CONNECTED && tentativas < 30) {
+    delay(500);
+    Serial.print(".");
+    tentativas++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("");
+    Serial.print("Conectado! IP: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("");
+    Serial.println("Falha ao conectar ao WiFi. Verifique as credenciais em devWifiSSID/devWifiPassword.");
+  }
+}
+
 // ------------------------------- Setup -------------------------------
+
 void setup() {
   SPI.begin(EPD_SCLK, EPD_MISO, EPD_MOSI);
   Serial.begin(115200);
@@ -48,7 +75,10 @@ void setup() {
   server.collectHeaders(headerKeys, 1);
 
   // Verifica se tem wifi -> não: inicia hostspot
-  check_has_wifi();
+  //check_has_wifi();
+
+//conectar direto
+  connectToWifiDirectly();
  
   // Define routes (url)
   server.on("/save_wifi", handle_savewifi);
