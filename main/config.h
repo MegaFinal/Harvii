@@ -24,9 +24,12 @@
 #define EPD_WIDTH  800
 #define EPD_HEIGHT 480
 
-// Bytes do buffer de imagem: o painel usa 2 bits por pixel (4 tons de cinza).
-// 800 x 480 = 384.000 pixels x 2 bits / 8 bits por byte = 96.000 bytes.
-#define EPD_PLANE_BYTES ((EPD_WIDTH * EPD_HEIGHT) / 4)
+// 2 bits por pixel, MSB primeiro. 3 = branco, 2 = cinza claro, 1 = cinza escuro, 0 = preto.
+
+#define EPD_ROW_BYTES   (EPD_WIDTH / 4)                                 // 200 bytes por linha
+#define EPD_IMAGE_BYTES ((uint32_t)EPD_ROW_BYTES * (uint32_t)EPD_HEIGHT) // 96.000, só pra validar
+#define EPD_BAND_LINES  48                                              // divide 480 exato
+#define EPD_BAND_BYTES  (EPD_ROW_BYTES * EPD_BAND_LINES)                // 9.600 bytes na RAM
 
 // ------------------------------- Access Point -------------------------------
 // Rede que o ESP32 cria quando ainda nao conhece nenhum WiFi.

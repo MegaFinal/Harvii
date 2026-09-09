@@ -2,7 +2,7 @@
 #include <SPI.h>
 
 // Declaração única do objeto display (junta o io + display)
-GxEPD2_4G_4G<GxEPD2_750_GDEY075T7, GxEPD2_750_GDEY075T7::HEIGHT / 2> display(
+GxEPD2_4G_4G<GxEPD2_750_GDEY075T7, GxEPD2_750_GDEY075T7::HEIGHT / 8> display(
   GxEPD2_750_GDEY075T7(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY)
 );
 
@@ -31,19 +31,21 @@ void printOnDisplay(const char* text, const char* other_text) {
 }
 
 // Imprimir imagem
-void print_image(const uint8_t* bitmap, int largura, int altura) {
-  display.setFullWindow();
-  display.firstPage();
-  do {
-    display.fillScreen(GxEPD_WHITE);
-    display.drawBitmap(0, 0, bitmap, largura, altura, GxEPD_BLACK);
-  } while (display.nextPage());
+void display_image_begin() {
+  // Nada aqui no caso normal. A primeira chamada de writeImage_4G dispara o
+  // _Init_4G() da biblioteca, que carrega as LUTs de 4 tons e já preenche os
+  // dois planos da controladora com branco.
+  //
+  // Se aparecer fantasma da imagem anterior, descomente — custa um refresh
+  // branco inteiro (~5 s) com o celular esperando:
+  Serial.println("Iniciando impressão imagem");
+  display.clearScreen();
 }
 
-// Desenha a imagem 4G recebida do app.
-// O "2" e o formato de bits (confirmado pelo exemplo oficial pra 800x480).
-// As flags (true,false,true) seguem o exemplo: invert, mirror_y, pgm.
-void print_image_4G(const uint8_t* bitmap) {
-  display.clearScreen();          // limpa (evita ghosting da GDEY075T7)
-  display.epd2.drawImage_4G(bitmap, 2, 0, 0, 800, 480, false, false, false);
+void display_image_band(const uint8_t* band, int16_t y, int16_t lines) {
+  display.epd2.writeImage_4G(band, 2, 0, y, EPD_WIDTH, lines, false, false, false);
+}
+
+void display_image_end() {
+  display.epd2.refresh(false);
 }
