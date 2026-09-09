@@ -144,7 +144,8 @@ static void handle_show_image() {
 
   // Responde antes de desenhar: o refresh do e-paper leva segundos
   server.send(200, "application/json", json_response(true, "Imagem desenhada"));
-  print_image(imgBuf, EPD_WIDTH, EPD_HEIGHT);
+  // print_image(imgBuf, EPD_WIDTH, EPD_HEIGHT);
+  print_image_4G(imgBuf);
 }
 
 // ------------------------------- API pública -------------------------------
