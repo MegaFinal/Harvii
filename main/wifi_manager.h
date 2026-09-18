@@ -12,3 +12,9 @@ void wifi_conectar(const String& ssid, const String& senha);
 
 /// Levanta o access point de configuração e mostra os dados no display.
 void wifi_iniciar_access_point();
+
+/// Guarda as credenciais para conectar depois, fora do handler web.
+void wifi_agendar_conexao(const String& ssid, const String& senha);
+
+/// Chamar no loop(): executa a conexão pendente, se houver.
+void wifi_loop();
