@@ -94,13 +94,12 @@ static void handle_savewifi() {
 
   Serial.printf("Parsed ssid: %s\n", ssidRecebido.c_str());
 
-  // Responde antes de conectar: conectar derruba o access point e o
-  // celular nunca receberia esta resposta
+  // Só agenda: a conexão roda no loop(), depois que esta requisição
+  // já foi respondida e encerrada
+  wifi_agendar_conexao(ssidRecebido, senhaRecebida);
+
   server.send(200, "application/json", json_response(true, "Data processed successfully"));
   Serial.println("Recebido pedido para novo WiFi pelo navegador!");
-  delay(500); //folego
-
-  wifi_conectar(ssidRecebido, senhaRecebida);
 }
 
 static void handle_print_text() {

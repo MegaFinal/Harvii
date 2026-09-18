@@ -6,6 +6,8 @@
 void setup() {
   Serial.begin(115200);
 
+  Serial.println("Build: " __DATE__ " " __TIME__);
+
   Serial.println("Iniciando display...");
   display_init();
 
@@ -17,5 +19,6 @@ void setup() {
 
 void loop() {
   servidor_atender();
+  wifi_loop();
   delay(10);
 }
