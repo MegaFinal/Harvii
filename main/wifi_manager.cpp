@@ -4,6 +4,8 @@
 #include "config.h"
 #include "display.h"
 
+#include <Preferences.h>
+
 // Credenciais da rede do usuário. Vivem só neste arquivo — o resto do
 // projeto interage por wifi_conectar(), nunca lendo estas variáveis.
 static String novoWifi = "";
@@ -41,6 +43,24 @@ static void wifi_varrer_redes() {
                   WiFi.channel(i), WiFi.encryptionType(i));
   }
   WiFi.scanDelete();
+}
+
+// ------------------------------- Persistência -------------------------------
+
+static void salvar_credenciais() {
+  Preferences prefs;
+  prefs.begin(NVS_WIFI, false);
+  prefs.putString("ssid", novoWifi);
+  prefs.putString("senha", novaPassword);
+  prefs.end();
+}
+
+static void carregar_credenciais() {
+  Preferences prefs;
+  prefs.begin(NVS_WIFI, true);
+  novoWifi     = prefs.getString("ssid", "");
+  novaPassword = prefs.getString("senha", "");
+  prefs.end();
 }
 
 // ------------------------------- Access point -------------------------------
@@ -99,25 +119,27 @@ void wifi_conectar(const String& ssid, const String& senha) {
     Serial.println("\nWi-Fi conectado! IP: " + WiFi.localIP().toString());
     WiFi.softAPdisconnect(true);  // desliga só o AP, fica em STA
     printOnDisplay("Online! Novo ip:", WiFi.localIP().toString().c_str());
+    salvar_credenciais();
     return;
   }
 
   Serial.printf("\nFalhou. status=%d, ultimo motivo=%d\n",
                 WiFi.status(), ultimoMotivo);
 
-  // Para de tentar e volta só para AP. O AP nunca caiu, então não
-  // precisa ser recriado: só redesenha as instruções no display.
+  // Para de tentar e volta só para AP. Recria o AP porque, no boot,
+  // ele ainda não tinha sido configurado com AP_SSID/AP_PASSWORD.
   WiFi.disconnect(false);
   WiFi.mode(WIFI_AP);
   printOnDisplay("Erro ao conectar", "Tente de novo");
   delay(2000);
-  mostrar_instrucoes_ap();
+  wifi_iniciar_access_point();
 }
 
 void wifi_iniciar() {
   WiFi.onEvent(wifi_evento);
+  carregar_credenciais();
 
-  if (novoWifi != "" && novaPassword != "") {
+  if (novoWifi != "") {
     wifi_conectar(novoWifi, novaPassword);
   } else {
     wifi_iniciar_access_point();
