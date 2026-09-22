@@ -8,11 +8,13 @@
 #include "auth.h"
 #include "wifi_manager.h"
 
+#include "reset.h"
+
 // Create web server on port 80
 static WebServer server(80);
 
 // SignIn Code
-static String hash = gerarUUIDv4();
+static String hash;
 
 // ------------------------------- Helpers -------------------------------
 
@@ -100,6 +102,12 @@ static void handle_savewifi() {
 
   server.send(200, "application/json", json_response(true, "Data processed successfully"));
   Serial.println("Recebido pedido para novo WiFi pelo navegador!");
+}
+
+static void handle_reset() {
+  if (!autorizado()) return;
+  server.send(200, "application/json", json_response(true, "Resetando"));
+  reset_agendar();   // roda no loop(), depois que a resposta já saiu
 }
 
 static void handle_print_text() {
@@ -203,6 +211,8 @@ static void handle_show_image() {
 // ------------------------------- API pública -------------------------------
 
 void servidor_iniciar() {
+  hash = auth_obter_hash();
+  
   // Avisa o servidor para não ignorar o nosso cabeçalho de segurança
   const char* headerKeys[] = {"X-Auth-Hash"};
   server.collectHeaders(headerKeys, 1);
@@ -211,6 +221,7 @@ void servidor_iniciar() {
   server.on("/ask_code",   handle_paringcode);
   server.on("/send_text",  handle_print_text);
   server.on("/send_image", HTTP_POST, handle_show_image, handle_image_raw);
+  server.on("/reset",      HTTP_POST, handle_reset);
   server.begin();
 }
 

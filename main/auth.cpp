@@ -1,6 +1,9 @@
 #include "auth.h"
 #include "esp_random.h"
 
+#include <Preferences.h>
+#include "config.h"
+
 String gerarUUIDv4() {
   uint8_t bytes[16];
   esp_fill_random(bytes, sizeof(bytes));
@@ -17,4 +20,16 @@ String gerarUUIDv4() {
     bytes[12], bytes[13], bytes[14], bytes[15]);
 
   return String(buf);
+}
+
+String auth_obter_hash() {
+  Preferences prefs;
+  prefs.begin(NVS_AUTH, false);
+  String h = prefs.getString("hash", "");
+  if (h == "") {
+    h = gerarUUIDv4();
+    prefs.putString("hash", h);
+  }
+  prefs.end();
+  return h;
 }

@@ -35,3 +35,11 @@
 // Rede que o ESP32 cria quando ainda nao conhece nenhum WiFi.
 #define AP_SSID     "ESP32"
 #define AP_PASSWORD "12345678"
+
+// ------------------------------- Persistência -------------------------------
+#define NVS_WIFI "wifi"   // namespace das credenciais do WiFi
+#define NVS_AUTH "auth"   // namespace do hash de pareamento
+
+// ------------------------------- Reset de fábrica -------------------------------
+#define PIN_RESET      0     // botão BOOT (GPIO0)
+#define RESET_HOLD_MS  5000  // tempo segurando para resetar
