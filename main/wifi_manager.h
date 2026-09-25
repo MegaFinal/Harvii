@@ -18,3 +18,6 @@ void wifi_agendar_conexao(const String& ssid, const String& senha);
 
 /// Chamar no loop(): executa a conexão pendente, se houver.
 void wifi_loop();
+
+/// Nome único na rede: "harvi-" + 2 últimos bytes do MAC (ex.: harvi-eb9c).
+String wifi_nome_dispositivo();
