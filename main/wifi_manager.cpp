@@ -3,6 +3,7 @@
 #include <WiFi.h>
 #include "config.h"
 #include "display.h"
+#include <ESPmDNS.h>
 
 #include <Preferences.h>
 
@@ -13,8 +14,12 @@ static String novaPassword = "";
 
 // Pedido de conexão vindo do servidor web, executado depois no loop()
 static volatile bool pedidoConexao = false;
+static unsigned long pedidoEm = 0;
 static String ssidPendente = "";
 static String senhaPendente = "";
+
+// Espera antes de conectar, para a resposta HTTP chegar ao celular
+static const unsigned long ESPERA_ANTES_DE_CONECTAR_MS = 1500;
 
 // Tenta conectar por no máximo 40 × 500 ms = 20 segundos
 static const int MAX_TENTATIVAS = 40;
@@ -118,7 +123,14 @@ void wifi_conectar(const String& ssid, const String& senha) {
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\nWi-Fi conectado! IP: " + WiFi.localIP().toString());
     WiFi.softAPdisconnect(true);  // desliga só o AP, fica em STA
-    printOnDisplay("Online! Novo ip:", WiFi.localIP().toString().c_str());
+    String nome = wifi_nome_dispositivo();
+    MDNS.end();                          // caso já estivesse rodando
+    if (MDNS.begin(nome.c_str())) {
+      MDNS.addService("http", "tcp", 80);
+      Serial.println("mDNS: " + nome + ".local");
+    }
+    delay(500);
+    printOnDisplay("Online!", "Abra o app para parear");
     salvar_credenciais();
     return;
   }
@@ -149,12 +161,21 @@ void wifi_iniciar() {
 void wifi_agendar_conexao(const String& ssid, const String& senha) {
   ssidPendente = ssid;
   senhaPendente = senha;
+  pedidoEm = millis();
   pedidoConexao = true;
 }
 
 void wifi_loop() {
-  if (pedidoConexao) {
+  if (pedidoConexao && millis() - pedidoEm > ESPERA_ANTES_DE_CONECTAR_MS) {
     pedidoConexao = false;
     wifi_conectar(ssidPendente, senhaPendente);
   }
+}
+
+String wifi_nome_dispositivo() {
+  uint64_t mac = ESP.getEfuseMac();
+  char buf[16];
+  snprintf(buf, sizeof(buf), "harvi-%02x%02x",
+           (uint8_t)(mac >> 32), (uint8_t)(mac >> 40));
+  return String(buf);
 }

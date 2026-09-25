@@ -100,7 +100,14 @@ static void handle_savewifi() {
   // já foi respondida e encerrada
   wifi_agendar_conexao(ssidRecebido, senhaRecebida);
 
-  server.send(200, "application/json", json_response(true, "Data processed successfully"));
+  // Retorna o nome do dispositivo para o app procurar. Ex: harvi-eb9c.local
+  JsonDocument resp;
+  resp["success"] = true;
+  resp["message"] = "Data processed successfully";
+  resp["name"]    = wifi_nome_dispositivo();
+  String out;
+  serializeJson(resp, out);
+  server.send(200, "application/json", out);
   Serial.println("Recebido pedido para novo WiFi pelo navegador!");
 }
 

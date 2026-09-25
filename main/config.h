@@ -33,7 +33,7 @@
 
 // ------------------------------- Access Point -------------------------------
 // Rede que o ESP32 cria quando ainda nao conhece nenhum WiFi.
-#define AP_SSID     "ESP32"
+#define AP_SSID     "HARVI"
 #define AP_PASSWORD "12345678"
 
 // ------------------------------- Persistência -------------------------------
