@@ -84,6 +84,7 @@ static void handle_paringcode() {
 
   // Responde primeiro: o refresh do e-paper leva ~2,5 s
   printOnDisplay("Celular pareado!", "Suas tarefas vao aparecer aqui em instantes");
+  precisaAtualizar = true;   // a mensagem substituiu o gráfico
 }
 
 static void handle_savewifi() {
@@ -115,6 +116,18 @@ static void handle_savewifi() {
   Serial.println("Recebido pedido para novo WiFi pelo navegador!");
 }
 
+static void handle_status() {
+  if (!autorizado()) return;
+
+  JsonDocument resp;
+  resp["success"]      = true;
+  resp["message"]      = "ok";
+  resp["needsRefresh"] = precisaAtualizar;
+  String out;
+  serializeJson(resp, out);
+  server.send(200, "application/json", out);
+}
+
 static void handle_reset() {
   if (!autorizado()) return;
   server.send(200, "application/json", json_response(true, "Resetando"));
@@ -135,8 +148,8 @@ static void handle_print_text() {
     return;
   }
 
-  printOnDisplay(doc["messageOne"], doc["messageTwo"]);
   server.send(200, "application/json", json_response(true, "Data processed successfully"));
+  printOnDisplay(doc["messageOne"], doc["messageTwo"]);
 }
 
 static uint8_t  bandBuf[EPD_BAND_BYTES];  // 9.600 bytes, o único custo de RAM
@@ -216,6 +229,7 @@ static void handle_show_image() {
     return;
   }
   server.send(200, "application/json", json_response(true, imgMsg));
+  precisaAtualizar = false;
   display_image_end();   // responde antes: o refresh leva segundos
 }
 
@@ -233,9 +247,14 @@ void servidor_iniciar() {
   server.on("/send_text",  handle_print_text);
   server.on("/send_image", HTTP_POST, handle_show_image, handle_image_raw);
   server.on("/reset",      HTTP_POST, handle_reset);
+  server.on("/status", HTTP_GET, handle_status);
   server.begin();
 }
 
 void servidor_atender() {
   server.handleClient();
+}
+
+void servidor_pedir_atualizacao() {
+  precisaAtualizar = true;
 }
