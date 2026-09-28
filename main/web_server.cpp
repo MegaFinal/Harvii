@@ -16,6 +16,10 @@ static WebServer server(80);
 // SignIn Code
 static String hash;
 
+// A tela perdeu o gráfico e precisa que o app mande de novo.
+// Começa ligado: logo depois do boot a tela não tem o gráfico.
+static bool precisaAtualizar = true;
+
 // ------------------------------- Helpers -------------------------------
 
 static String json_response(bool success, const char* message) {

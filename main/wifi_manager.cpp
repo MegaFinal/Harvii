@@ -24,6 +24,15 @@ static const unsigned long ESPERA_ANTES_DE_CONECTAR_MS = 1500;
 // Tenta conectar por no máximo 40 × 500 ms = 20 segundos
 static const int MAX_TENTATIVAS = 40;
 
+// ------------------------------- Monitoramento -------------------------------
+static bool online = false;              // já conectou no WiFi de casa com estas credenciais
+static bool avisandoQueda = false;       // a mensagem de "sem conexao" está na tela
+static unsigned long caiuEm = 0;         // quando a conexão caiu (0 = conectado)
+static unsigned long ultimaTentativa = 0;
+
+static const unsigned long ESPERA_ANTES_DE_AVISAR_MS = 5000;   // ignora quedas rápidas
+static const unsigned long INTERVALO_TENTATIVAS_MS   = 15000;  // força nova tentativa
+
 // Último motivo de desconexão informado pelo driver (0 = nenhum)
 static volatile int ultimoMotivo = 0;
 
@@ -87,7 +96,24 @@ void wifi_iniciar_access_point(bool mostrarInstrucoes) {
 
 // ------------------------------- Conexão -------------------------------
 
+/// Anuncia o nome do Harvi na rede (ex.: harvi-eb9c.local).
+/// Chamar sempre que ganhar conexão, para os celulares voltarem a encontrá-lo.
+static void anunciar_mdns() {
+  WiFi.setSleep(false);   // sem modem sleep: responde ao mDNS na hora
+
+  String nome = wifi_nome_dispositivo();
+  MDNS.end();
+  if (MDNS.begin(nome.c_str())) {
+    MDNS.addService("http", "tcp", 80);
+    Serial.println("mDNS: " + nome + ".local");
+  }
+}
+
 void wifi_conectar(const String& ssid, const String& senha) {
+  online = false;
+  avisandoQueda = false;
+  caiuEm = 0;
+
   novoWifi = ssid;
   novaPassword = senha;
   novoWifi.trim();
@@ -118,15 +144,9 @@ void wifi_conectar(const String& ssid, const String& senha) {
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\nWi-Fi conectado! IP: " + WiFi.localIP().toString());
     WiFi.softAPdisconnect(true);  // desliga só o AP, fica em STA
-    WiFi.setSleep(false);   // sem modem sleep: o ESP32 não perde as perguntas do mDNS
-    
-    String nome = wifi_nome_dispositivo();
-    MDNS.end();                          // caso já estivesse rodando
-    if (MDNS.begin(nome.c_str())) {
-      MDNS.addService("http", "tcp", 80);
-      Serial.println("mDNS: " + nome + ".local");
-    }
-    delay(500);
+    anunciar_mdns();
+    online = true;
+
     printOnDisplay("Harvi conectado!", "Volte o celular para o WiFi de casa e toque em Parear no app");
     salvar_credenciais();
     return;
@@ -159,11 +179,51 @@ void wifi_agendar_conexao(const String& ssid, const String& senha) {
   pedidoConexao = true;
 }
 
+/// Percebe quedas do WiFi de casa, avisa no display e força novas tentativas até voltar.
+static void monitorar_conexao() {
+  if (!online) return;   // só vale depois de ter conectado com sucesso
+
+  if (WiFi.status() == WL_CONNECTED) {
+    if (caiuEm != 0) {
+      Serial.println("Reconectado! IP: " + WiFi.localIP().toString());
+      anunciar_mdns();
+
+      if (avisandoQueda) {
+        printOnDisplay("Conectado de novo!", "Suas tarefas vao aparecer na proxima atualizacao");
+        avisandoQueda = false;
+      }
+      caiuEm = 0;
+    }
+    return;
+  }
+
+  // Sem conexão
+  if (caiuEm == 0) {
+    caiuEm = millis();
+    ultimaTentativa = millis();
+    Serial.println("Conexao com o WiFi perdida");
+  }
+
+  if (!avisandoQueda && millis() - caiuEm > ESPERA_ANTES_DE_AVISAR_MS) {
+    avisandoQueda = true;
+    String sub = "Tentando reconectar a rede " + novoWifi;
+    printOnDisplay("Sem conexao com o WiFi", sub.c_str());
+  }
+
+  if (millis() - ultimaTentativa > INTERVALO_TENTATIVAS_MS) {
+    ultimaTentativa = millis();
+    Serial.println("Tentando reconectar...");
+    WiFi.reconnect();
+  }
+}
+
 void wifi_loop() {
   if (pedidoConexao && millis() - pedidoEm > ESPERA_ANTES_DE_CONECTAR_MS) {
     pedidoConexao = false;
     wifi_conectar(ssidPendente, senhaPendente);
   }
+
+  monitorar_conexao();
 }
 
 String wifi_nome_dispositivo() {
