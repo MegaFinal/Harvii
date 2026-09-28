@@ -10,8 +10,9 @@ void wifi_iniciar();
 /// Se falhar, volta sozinho para o access point.
 void wifi_conectar(const String& ssid, const String& senha);
 
-/// Levanta o access point de configuração e mostra os dados no display.
-void wifi_iniciar_access_point();
+/// Levanta o access point de configuração. Com `mostrarInstrucoes`, explica no display
+/// como configurar.
+void wifi_iniciar_access_point(bool mostrarInstrucoes = true);
 
 /// Guarda as credenciais para conectar depois, fora do handler web.
 void wifi_agendar_conexao(const String& ssid, const String& senha);

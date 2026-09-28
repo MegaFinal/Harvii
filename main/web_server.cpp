@@ -74,12 +74,12 @@ static bool ler_json(JsonDocument& doc) {
 // ------------------------------- Handlers -------------------------------
 
 static void handle_paringcode() {
-  printOnDisplay("Pareando", ".........");
-
   server.send(200, "application/json", json_response(true, hash.c_str()));
   Serial.print("hash: ");
   Serial.println(hash);
-  delay(500); //folego
+
+  // Responde primeiro: o refresh do e-paper leva ~2,5 s
+  printOnDisplay("Celular pareado!", "Suas tarefas vao aparecer aqui em instantes");
 }
 
 static void handle_savewifi() {
