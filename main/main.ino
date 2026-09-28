@@ -8,6 +8,8 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Build: " __DATE__ " " __TIME__);
 
+  printOnDisplay("Iniciando Harvis", "Conectando em instantes");
+
   reset_iniciar();
 
   Serial.println("Iniciando display...");
@@ -15,6 +17,8 @@ void setup() {
 
   wifi_iniciar();
   servidor_iniciar();
+
+  delay(1000);
 }
 
 void loop() {
