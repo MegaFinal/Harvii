@@ -71,23 +71,18 @@ static void carregar_credenciais() {
 // ------------------------------- Access point -------------------------------
 
 static void mostrar_instrucoes_ap() {
-  String linha1 = String("Wifi: ") + AP_SSID;
-  String linha2 = String("Senha: ") + AP_PASSWORD;
-  printOnDisplay(linha1.c_str(), linha2.c_str());
+  String sub = String("Conecte o celular na rede ") + AP_SSID + ", senha " + AP_PASSWORD + ", e abra o app";
+  printOnDisplay("Vamos configurar o Harvi!", sub.c_str());
 }
 
-void wifi_iniciar_access_point() {
-  mostrar_instrucoes_ap();
-
+void wifi_iniciar_access_point(bool mostrarInstrucoes) {
   WiFi.mode(WIFI_AP);
   WiFi.softAP(AP_SSID, AP_PASSWORD);
   Serial.println("Access Point Started");
   Serial.print("IP address: ");
   Serial.println(WiFi.softAPIP());
 
-  String ip = WiFi.softAPIP().toString();
-  printOnDisplay("Entre no navegador:", ip.c_str());
-  delay(5000); // 5 seg
+  if (mostrarInstrucoes) mostrar_instrucoes_ap();
 }
 
 // ------------------------------- Conexão -------------------------------
@@ -101,7 +96,7 @@ void wifi_conectar(const String& ssid, const String& senha) {
   Serial.print("Conectando a rede: [");
   Serial.print(novoWifi);
   Serial.println("]");
-  printOnDisplay("Conectando ", "...");
+    printOnDisplay("Conectando ao WiFi", "Isso pode levar alguns segundos");
 
   // Mantém o AP de pé e liga a estação, sem desligar o rádio
   WiFi.mode(WIFI_AP_STA);
@@ -123,6 +118,8 @@ void wifi_conectar(const String& ssid, const String& senha) {
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\nWi-Fi conectado! IP: " + WiFi.localIP().toString());
     WiFi.softAPdisconnect(true);  // desliga só o AP, fica em STA
+    WiFi.setSleep(false);   // sem modem sleep: o ESP32 não perde as perguntas do mDNS
+    
     String nome = wifi_nome_dispositivo();
     MDNS.end();                          // caso já estivesse rodando
     if (MDNS.begin(nome.c_str())) {
@@ -130,21 +127,18 @@ void wifi_conectar(const String& ssid, const String& senha) {
       Serial.println("mDNS: " + nome + ".local");
     }
     delay(500);
-    printOnDisplay("Online!", "Abra o app para parear");
+    printOnDisplay("Harvi conectado!", "Volte o celular para o WiFi de casa e toque em Parear no app");
     salvar_credenciais();
     return;
   }
 
-  Serial.printf("\nFalhou. status=%d, ultimo motivo=%d\n",
-                WiFi.status(), ultimoMotivo);
+  Serial.printf("\nFalhou. status=%d, ultimo motivo=%d\n", WiFi.status(), ultimoMotivo);
 
   // Para de tentar e volta só para AP. Recria o AP porque, no boot,
   // ele ainda não tinha sido configurado com AP_SSID/AP_PASSWORD.
   WiFi.disconnect(false);
-  WiFi.mode(WIFI_AP);
-  printOnDisplay("Erro ao conectar", "Tente de novo");
-  delay(2000);
-  wifi_iniciar_access_point();
+  printOnDisplay("Nao consegui conectar ao WiFi", "Para configurar de novo, conecte o celular na rede HARVI e abra o app");
+  wifi_iniciar_access_point(false);   // sobe o AP sem apagar a mensagem de erro
 }
 
 void wifi_iniciar() {
