@@ -231,6 +231,7 @@ static void handle_show_image() {
   }
   server.send(200, "application/json", json_response(true, imgMsg));
   precisaAtualizar = false;
+  delay(200);
   display_image_end();   // responde antes: o refresh leva segundos
 }
 
