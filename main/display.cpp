@@ -104,7 +104,7 @@ void display_image_begin() {
   // Se aparecer fantasma da imagem anterior, descomente — custa um refresh
   // branco inteiro (~5 s) com o celular esperando:
   Serial.println("Iniciando impressão imagem");
-  display.clearScreen();
+  // display.clearScreen();
 }
 
 void display_image_band(const uint8_t* band, int16_t y, int16_t lines) {

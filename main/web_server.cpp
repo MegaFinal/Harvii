@@ -162,6 +162,7 @@ static const char* imgMsg  = "Imagem desenhada";
 
 static void img_falhou(uint16_t status, const char* msg) {
   imgOk = false; imgStatus = status; imgMsg = msg;
+  precisaAtualizar = true;   // a tela não recebeu a imagem: o app deve reenviar
 }
 
 static void flush_band() {
