@@ -4,6 +4,7 @@
 #include "config.h"
 #include "display.h"
 #include <ESPmDNS.h>
+#include "web_server.h"
 
 #include <Preferences.h>
 
@@ -35,6 +36,9 @@ static const unsigned long INTERVALO_TENTATIVAS_MS   = 15000;  // força nova te
 
 // Último motivo de desconexão informado pelo driver (0 = nenhum)
 static volatile int ultimoMotivo = 0;
+
+// conectando com credenciais salvas, não por uma nova configuração
+static bool conexaoDoBoot = false;
 
 // ------------------------------- Diagnóstico -------------------------------
 
@@ -147,17 +151,39 @@ void wifi_conectar(const String& ssid, const String& senha) {
     anunciar_mdns();
     online = true;
 
-    printOnDisplay("Harvi conectado!", "Volte o celular para o WiFi de casa e toque em Parear no app");
+    if (conexaoDoBoot) {
+      printOnDisplay("Harvi ligado!", "Abra o app para atualizar suas tarefas");
+    } else {
+      printOnDisplay("Harvi conectado!", "Volte o celular para o WiFi de casa e toque em Parear no app");
+    }
+    conexaoDoBoot = false;
     salvar_credenciais();
     return;
   }
 
   Serial.printf("\nFalhou. status=%d, ultimo motivo=%d\n", WiFi.status(), ultimoMotivo);
 
-  // Para de tentar e volta só para AP. Recria o AP porque, no boot,
-  // ele ainda não tinha sido configurado com AP_SSID/AP_PASSWORD.
+  if (conexaoDoBoot) {
+    // Credenciais salvas: o roteador pode só estar demorando (ex.: queda de energia).
+    // Continua tentando e mantém a rede HARVI de pé para quem quiser trocar de rede.
+    conexaoDoBoot = false;
+    WiFi.softAP(AP_SSID, AP_PASSWORD);   // já estamos em AP_STA
+    online = true;
+    avisandoQueda = true;
+    caiuEm = millis();
+    ultimaTentativa = millis();
+
+    String sub = String("Tentando reconectar a rede ") + novoWifi +
+                 ". Para trocar de rede, use a rede HARVI no app";
+    printOnDisplay("Sem conexao com o WiFi", sub.c_str());
+    return;
+  }
+
+  // Configuração nova que falhou (senha errada, rede não encontrada):
+  // volta só para AP e deixa a mensagem de erro na tela
   WiFi.disconnect(false);
-  printOnDisplay("Nao consegui conectar ao WiFi", "Para configurar de novo, conecte o celular na rede HARVI e abra o app");
+  printOnDisplay("Nao consegui conectar ao WiFi",
+                 "Para configurar de novo, conecte o celular na rede HARVI e abra o app");
   wifi_iniciar_access_point(false);   // sobe o AP sem apagar a mensagem de erro
 }
 
@@ -166,6 +192,7 @@ void wifi_iniciar() {
   carregar_credenciais();
 
   if (novoWifi != "") {
+    conexaoDoBoot = true;
     wifi_conectar(novoWifi, novaPassword);
   } else {
     wifi_iniciar_access_point();
@@ -186,12 +213,14 @@ static void monitorar_conexao() {
   if (WiFi.status() == WL_CONNECTED) {
     if (caiuEm != 0) {
       Serial.println("Reconectado! IP: " + WiFi.localIP().toString());
+      if (WiFi.getMode() == WIFI_AP_STA) WiFi.softAPdisconnect(true);
       anunciar_mdns();
 
       if (avisandoQueda) {
-        printOnDisplay("Conectado de novo!", "Suas tarefas vao aparecer na proxima atualizacao");
+        printOnDisplay("Conectado de novo!", "Abra o app para atualizar suas tarefas");
         avisandoQueda = false;
       }
+      servidor_pedir_atualizacao();
       caiuEm = 0;
     }
     return;
@@ -206,7 +235,7 @@ static void monitorar_conexao() {
 
   if (!avisandoQueda && millis() - caiuEm > ESPERA_ANTES_DE_AVISAR_MS) {
     avisandoQueda = true;
-    String sub = "Tentando reconectar a rede " + novoWifi;
+    String sub = String("Tentando reconectar a rede ") + novoWifi;
     printOnDisplay("Sem conexao com o WiFi", sub.c_str());
   }
 
