@@ -9,7 +9,7 @@ void setup() {
   Serial.println("Build: " __DATE__ " " __TIME__);
   setCpuFrequencyMhz(160);   // padrão 240 MHz: consome menos e sobra desempenho para o Harvi
 
-  printOnDisplay("Iniciando Harvis", "Conectando em instantes");
+  printOnDisplay("Iniciando o Harvii", "Conectando em instantes");
 
   reset_iniciar();
 

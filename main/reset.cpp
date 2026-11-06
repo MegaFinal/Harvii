@@ -11,7 +11,7 @@ static unsigned long apertadoDesde = 0;
 /// abre o AP e gera um hash novo.
 static void reset_fabrica() {
   Serial.println("Reset de fabrica");
-  printOnDisplay("Resetando o Harvi", "Em instantes ele volta para a configuracao inicial");
+  printOnDisplay("Resetando o Harvii", "Em instantes ele volta para a configuracao inicial");
 
   Preferences prefs;
   prefs.begin(NVS_WIFI, false); prefs.clear(); prefs.end();
