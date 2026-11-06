@@ -85,7 +85,7 @@ static void carregar_credenciais() {
 
 static void mostrar_instrucoes_ap() {
   String sub = String("Conecte o celular na rede ") + AP_SSID + ", senha " + AP_PASSWORD + ", e abra o app";
-  printOnDisplay("Vamos configurar o Harvi!", sub.c_str());
+  printOnDisplay("Vamos configurar o Harvii!", sub.c_str());
 }
 
 void wifi_iniciar_access_point(bool mostrarInstrucoes) {
@@ -152,9 +152,9 @@ void wifi_conectar(const String& ssid, const String& senha) {
     online = true;
 
     if (conexaoDoBoot) {
-      printOnDisplay("Harvi ligado!", "Abra o app para atualizar suas tarefas");
+      printOnDisplay("Harvii ligado!", "Abra o app para atualizar suas tarefas");
     } else {
-      printOnDisplay("Harvi conectado!", "Volte o celular para o WiFi de casa e toque em Parear no app");
+      printOnDisplay("Harvii conectado!", "Volte o celular para o WiFi de casa e toque em Parear no app");
     }
     conexaoDoBoot = false;
     salvar_credenciais();
@@ -174,7 +174,7 @@ void wifi_conectar(const String& ssid, const String& senha) {
     ultimaTentativa = millis();
 
     String sub = String("Tentando reconectar a rede ") + novoWifi +
-                 ". Para trocar de rede, use a rede HARVI no app";
+                 ". Para trocar de rede, use a rede HARVII no app";
     printOnDisplay("Sem conexao com o WiFi", sub.c_str());
     return;
   }
@@ -183,7 +183,7 @@ void wifi_conectar(const String& ssid, const String& senha) {
   // volta só para AP e deixa a mensagem de erro na tela
   WiFi.disconnect(false);
   printOnDisplay("Nao consegui conectar ao WiFi",
-                 "Para configurar de novo, conecte o celular na rede HARVI e abra o app");
+                 "Para configurar de novo, conecte o celular na rede HARVII e abra o app");
   wifi_iniciar_access_point(false);   // sobe o AP sem apagar a mensagem de erro
 }
 
